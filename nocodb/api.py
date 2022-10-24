@@ -1,5 +1,10 @@
+from typing import Optional
 from enum import Enum
-from .nocodb import NocoDBProject
+from .nocodb import (
+    NocoDBProject,
+    NocoDBTable,
+    NocoDBColumn
+)
 
 
 class NocoDBAPIUris(Enum):
@@ -16,25 +21,49 @@ class NocoDBAPI:
             f"{base_uri}/{NocoDBAPIUris.V1_DB_META_PREFIX.value}"
         )
 
-    def get_table_uri(self, project: NocoDBProject, table: str) -> str:
+    def get_table_uri(self, project: NocoDBProject, table: NocoDBTable) -> str:
         return "/".join(
             (
                 self.__base_data_uri,
                 project.org_name,
-                project.project_name,
-                table,
+                project.name,
+                table.title,
             )
         )
 
+    def get_table_meta_uri(self, table: Optional[NocoDBTable] = None) -> str:
+        uri = [
+           self.__base_meta_uri,
+           "tables",
+        ]
+        if table:
+            uri.append(table.id)
+
+        return "/".join(uri)
+
+    def get_column_meta_uri(self, table: NocoDBTable, column: Optional[NocoDBColumn] = None) -> str:
+        uri = [
+           self.get_table_meta_uri(table),
+            "columns"
+        ]
+        uri = [
+            self.__base_meta_uri,
+            "columns",
+        ]
+        if column:
+            uri.append(column.id)
+        return "/".join(uri)
+
+
     def get_row_detail_uri(
-        self, project: NocoDBProject, table: str, row_id: int
+        self, project: NocoDBProject, table: NocoDBTable, row_id: int
     ):
         return "/".join(
             (
                 self.__base_data_uri,
                 project.org_name,
-                project.project_name,
-                table,
+                project.name,
+                table.title,
                 str(row_id),
             )
         )
@@ -42,7 +71,7 @@ class NocoDBAPI:
     def get_nested_relations_rows_list_uri(
         self,
         project: NocoDBProject,
-        table: str,
+        table: NocoDBTable,
         relation_type: str,
         row_id: int,
         column_name: str,
@@ -51,8 +80,8 @@ class NocoDBAPI:
             (
                 self.__base_data_uri,
                 project.org_name,
-                project.project_name,
-                table,
+                project.name,
+                table.title,
                 str(row_id),
                 relation_type,
                 column_name,
@@ -61,10 +90,13 @@ class NocoDBAPI:
 
     def get_project_uri(
         self,
+        project: NocoDBProject = None
     ) -> str:
-        return "/".join(
-            (
-                self.__base_meta_uri,
-                "projects"
-            )
-        )
+        uri = [
+            self.__base_meta_uri,
+            "projects"
+        ]
+        if project:
+            uri.append(project.id)
+
+        return "/".join(uri)
